@@ -1,5 +1,6 @@
 package com.example.bandmate.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -51,6 +52,9 @@ fun SetlistScreen(navController: NavController, viewModel: SetlistViewModel) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 4.dp)
+                            .clickable {
+                                navController.navigate("setlistDetail/${setlist.id}")
+                            }
                     ) {
                         Text(
                             text = setlist.name,
@@ -58,8 +62,10 @@ fun SetlistScreen(navController: NavController, viewModel: SetlistViewModel) {
                             style = MaterialTheme.typography.titleMedium
                         )
                     }
+
+                }
                 }
             }
         }
     }
-}
+
