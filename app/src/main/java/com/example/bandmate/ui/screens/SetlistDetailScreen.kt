@@ -9,9 +9,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -36,7 +40,7 @@ import kotlinx.coroutines.launch
 fun SetlistDetailScreen(
     navController: NavController,
     viewModel: SetlistViewModel,
-    setlistId: Int
+    setlistId: Int,
 ) {
     val setlist = viewModel.setlists.find { it.id == setlistId }
     val coroutineScope = rememberCoroutineScope()
@@ -50,7 +54,17 @@ fun SetlistDetailScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text(setlist.name) })
+            TopAppBar(
+                title = { Text(setlist.name) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Volver"
+                        )
+                    }
+                }
+            )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
@@ -114,7 +128,7 @@ fun SetlistDetailScreen(
                     confirmButton = {
                         Button(
                             onClick = {
-                                val deletedSong = songToDelete // ← Guardamos antes de borrar
+                                val deletedSong = songToDelete
                                 viewModel.removeSongFromSetlist(setlistId, deletedSong!!)
                                 songToDelete = null
 
