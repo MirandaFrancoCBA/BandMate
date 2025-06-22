@@ -1,32 +1,93 @@
 package com.example.bandmate.viewmodel
 
-import androidx.compose.runtime.mutableStateListOf
-import androidx.lifecycle.ViewModel
-import com.example.bandmate.model.Setlist
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.bandmate.data.local.AppDatabase
+import com.example.bandmate.data.local.entities.Setlist
+import com.example.bandmate.data.local.entities.SetlistWithSongs
+import com.example.bandmate.data.local.entities.Song
+import com.example.bandmate.repository.SetlistRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
-class SetlistViewModel : ViewModel() {
-    private var nextId = 1
-    val setlists = mutableStateListOf<Setlist>()
+class SetlistViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val repository: SetlistRepository
+
+    private val _setlists = MutableStateFlow<List<Setlist>>(emptyList())
+    val setlists: StateFlow<List<Setlist>> get() = _setlists
+
+    private val _currentSetlist = MutableStateFlow<SetlistWithSongs?>(null)
+    val currentSetlist: StateFlow<SetlistWithSongs?> get() = _currentSetlist
+
+    init {
+        val dao = AppDatabase.getDatabase(application).setlistDao()
+        repository = SetlistRepository(dao)
+
+        // Cargar setlists al iniciar
+        loadAllSetlists()
+    }
+
+    private fun loadAllSetlists() {
+        viewModelScope.launch {
+            _setlists.value = repository.getAllSetlists()
+        }
+    }
+
+    fun loadSetlist(setlistId: Int) {
+        viewModelScope.launch {
+            _currentSetlist.value = repository.getSetlistWithSongs(setlistId)
+        }
+    }
 
     fun addSetlist(name: String) {
-        setlists.add(Setlist(id = nextId++, name = name))
-    }
-
-    fun addSongToSetlist(setlistId: Int, song: String) {
-        val index = setlists.indexOfFirst { it.id == setlistId }
-        if (index != -1) {
-            val current = setlists[index]
-            setlists[index] = current.copy(songs = current.songs + song)
-        }
-    }
-    fun removeSongFromSetlist(setlistId: Int, song: String) {
-        val index = setlists.indexOfFirst { it.id == setlistId }
-        if (index != -1) {
-            val current = setlists[index]
-            setlists[index] = current.copy(songs = current.songs - song)
+        viewModelScope.launch {
+            val newSetlist = Setlist(name = name)
+            repository.insertSetlist(newSetlist)
+            loadAllSetlists()
         }
     }
 
+    fun addSongToSetlist(setlistId: Int, title: String) {
+        viewModelScope.launch {
+            val newSong = Song(
+                setlistId = setlistId,
+                title = title,
+                lyrics = "",
+                chords = ""
+            )
+            repository.insertSong(newSong)
+            loadSetlist(setlistId)
+        }
+    }
+
+    fun removeSongFromSetlist(song: Song) {
+        viewModelScope.launch {
+            repository.deleteSong(song)
+            loadSetlist(song.setlistId)
+        }
+    }
+
+    fun updateSetlistName(setlistId: Int, newName: String) {
+        viewModelScope.launch {
+            val setlist = _currentSetlist.value?.setlist
+            if (setlist != null && setlist.id == setlistId) {
+                val updated = setlist.copy(name = newName)
+                repository.updateSetlist(updated)
+                loadSetlist(setlistId)
+                loadAllSetlists()
+            }
+        }
+    }
+
+    fun updateSong(song: Song) {
+        viewModelScope.launch {
+            repository.updateSong(song)
+            loadSetlist(song.setlistId)
+        }
+    }
 }
 
 

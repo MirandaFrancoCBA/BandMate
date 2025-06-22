@@ -11,6 +11,7 @@ import com.example.bandmate.ui.screens.HomeScreen
 import com.example.bandmate.ui.screens.RoleSelectionScreen
 import com.example.bandmate.ui.screens.SetlistDetailScreen
 import com.example.bandmate.ui.screens.SetlistScreen
+import com.example.bandmate.ui.screens.SongDetailScreen
 import com.example.bandmate.ui.screens.SplashScreen
 import com.example.bandmate.ui.screens.WelcomeScreen
 import com.example.bandmate.viewmodel.MainViewModel
@@ -42,6 +43,13 @@ fun AppNavGraph(navController: NavHostController, mainViewModel: MainViewModel, 
         ) {
             val setlistId = it.arguments?.getInt("id") ?: -1
             SetlistDetailScreen(navController, setlistViewModel, setlistId)
+        }
+        composable(
+            "songDetail/{songId}",
+            arguments = listOf(navArgument("songId") { type = NavType.IntType })
+        ) {
+            val songId = it.arguments?.getInt("songId") ?: -1
+            SongDetailScreen(navController = navController, viewModel = setlistViewModel, songId = songId)
         }
 
     }

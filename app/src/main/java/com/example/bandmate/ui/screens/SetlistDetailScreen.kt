@@ -1,6 +1,7 @@
 package com.example.bandmate.ui.screens
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,6 +12,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -23,6 +26,8 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.bandmate.data.local.entities.Song
 import com.example.bandmate.viewmodel.SetlistViewModel
 import kotlinx.coroutines.launch
 
@@ -42,10 +48,18 @@ fun SetlistDetailScreen(
     viewModel: SetlistViewModel,
     setlistId: Int,
 ) {
-    val setlist = viewModel.setlists.find { it.id == setlistId }
+    LaunchedEffect(setlistId) {
+        viewModel.loadSetlist(setlistId)
+    }
+
+    val setlistWithSongs by viewModel.currentSetlist.collectAsState()
+    val setlist = setlistWithSongs?.setlist
+    val songs = setlistWithSongs?.songs ?: emptyList()
     val coroutineScope = rememberCoroutineScope()
     var newSong by remember { mutableStateOf("") }
     val snackbarHostState = remember { SnackbarHostState() }
+    var isEditing by remember { mutableStateOf(false) }
+    var editedName by remember { mutableStateOf(setlist!!.name) }
 
     if (setlist == null) {
         Text("Setlist no encontrado.")
@@ -55,13 +69,39 @@ fun SetlistDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(setlist.name) },
+                title = {
+                    if (isEditing) {
+                        OutlinedTextField(
+                            value = editedName,
+                            onValueChange = { editedName = it },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    } else {
+                        Text(editedName)
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Volver"
                         )
+                    }
+                },
+                actions = {
+                    if (isEditing) {
+                        IconButton(onClick = {
+                            isEditing = false
+                        }) {
+                            Icon(Icons.Default.Check, contentDescription = "Guardar")
+                        }
+                    } else {
+                        IconButton(onClick = {
+                            isEditing = true
+                        }) {
+                            Icon(Icons.Default.Edit, contentDescription = "Editar nombre")
+                        }
                     }
                 }
             )
@@ -94,20 +134,23 @@ fun SetlistDetailScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            var songToDelete by remember { mutableStateOf<String?>(null) }
+            var songToDelete by remember { mutableStateOf<Song?>(null) }
 
             LazyColumn {
-                items(setlist.songs) { song ->
+                items(songs) { song ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(8.dp)
                     ) {
                         Text(
-                            text = song,
+                            text = song.title,
                             modifier = Modifier
                                 .weight(1f)
                                 .padding(end = 8.dp)
+                                .clickable {
+                                    navController.navigate("songDetail/${song.id}")
+                                }
                         )
                         Button(
                             onClick = {
@@ -124,12 +167,12 @@ fun SetlistDetailScreen(
                 AlertDialog(
                     onDismissRequest = { songToDelete = null },
                     title = { Text("Confirmar eliminación") },
-                    text = { Text("¿Seguro que querés eliminar \"${songToDelete}\" del setlist?") },
+                    text = { Text("¿Seguro que querés eliminar \"${songToDelete?.title}\" del setlist?") },
                     confirmButton = {
                         Button(
                             onClick = {
                                 val deletedSong = songToDelete
-                                viewModel.removeSongFromSetlist(setlistId, deletedSong!!)
+                                viewModel.removeSongFromSetlist(deletedSong!!)
                                 songToDelete = null
 
                                 coroutineScope.launch {
