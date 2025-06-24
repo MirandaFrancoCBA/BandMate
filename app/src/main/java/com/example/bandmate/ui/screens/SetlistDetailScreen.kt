@@ -2,6 +2,7 @@ package com.example.bandmate.ui.screens
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -141,22 +142,25 @@ fun SetlistDetailScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(8.dp)
+                            .padding(8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
                             text = song.title,
                             modifier = Modifier
                                 .weight(1f)
-                                .padding(end = 8.dp)
                                 .clickable {
-                                    navController.navigate("songDetail/${song.id}")
+                                    navController.navigate("songView/${song.id}")
                                 }
                         )
-                        Button(
-                            onClick = {
-                                songToDelete = song
-                            }
-                        ) {
+
+                        IconButton(onClick = {
+                            navController.navigate("songDetail/${song.id}")
+                        }) {
+                            Icon(Icons.Default.Edit, contentDescription = "Editar")
+                        }
+
+                        Button(onClick = { songToDelete = song }) {
                             Text("Eliminar")
                         }
                     }
