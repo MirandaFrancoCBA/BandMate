@@ -11,6 +11,7 @@ import com.example.bandmate.repository.SetlistRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.Flow
 
 class SetlistViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -87,6 +88,9 @@ class SetlistViewModel(application: Application) : AndroidViewModel(application)
             repository.updateSong(song)
             loadSetlist(song.setlistId)
         }
+    }
+    fun getSongById(songId: Int): Flow<Song?> {
+        return repository.getSongById(songId)
     }
 }
 

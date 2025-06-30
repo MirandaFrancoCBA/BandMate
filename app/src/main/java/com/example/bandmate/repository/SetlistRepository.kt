@@ -4,6 +4,7 @@ import com.example.bandmate.data.local.dao.SetlistDao
 import com.example.bandmate.data.local.entities.Setlist
 import com.example.bandmate.data.local.entities.SetlistWithSongs
 import com.example.bandmate.data.local.entities.Song
+import kotlinx.coroutines.flow.Flow
 
 class SetlistRepository(private val setlistDao: SetlistDao) {
 
@@ -37,5 +38,9 @@ class SetlistRepository(private val setlistDao: SetlistDao) {
 
     suspend fun updateSetlist(setlist: Setlist) {
         setlistDao.updateSetlist(setlist)
+    }
+
+    fun getSongById(songId: Int): Flow<Song?> {
+        return setlistDao.getSongById(songId)
     }
 }

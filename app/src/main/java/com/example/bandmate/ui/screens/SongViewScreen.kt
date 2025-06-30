@@ -1,3 +1,5 @@
+@file:Suppress("KotlinConstantConditions")
+
 package com.example.bandmate.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
@@ -26,10 +28,12 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.bandmate.viewmodel.SetlistViewModel
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,25 +42,28 @@ fun SongViewScreen(
     viewModel: SetlistViewModel,
     songId: Int
 ) {
-    val currentSetlistState by viewModel.currentSetlist.collectAsState()
-    val song = currentSetlistState?.songs?.find { it.id == songId }
+    val song by viewModel.getSongById(songId).collectAsState(initial = null)
     var semitoneShift by remember { mutableIntStateOf(0) }
 
     if (song == null) {
-        Text("Canción no encontrada.")
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text("Canción no encontrada.")
+        }
         return
     }
+
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(song.title) },
+                title = { Text(song!!.title) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Volver"
-                        )
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 }
             )
@@ -68,8 +75,8 @@ fun SongViewScreen(
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            val letraLines = song.lyrics.split("\n")
-            val acordeLines = song.chords.split("\n")
+            val letraLines = song!!.lyrics.split("\n")
+            val acordeLines = song!!.chords.split("\n")
 
             Row(
                 modifier = Modifier
@@ -88,11 +95,14 @@ fun SongViewScreen(
 
             for (i in letraLines.indices) {
                 if (i < acordeLines.size) {
-                    val transposedLine = acordeLines[i].split(" ").joinToString(" ") {
-                        transposeChord(it, semitoneShift)
-                    }
+                    val transposedLine = acordeLines[i]
+                        .split(" ")
+                        .joinToString(" ") { chordPart: String ->
+                            transposeChord(chordPart, semitoneShift)
+                        }
+
                     Text(
-                        text = transposedLine,
+                        text = AnnotatedString(transposedLine),
                         style = MaterialTheme.typography.bodyMedium,
                         fontFamily = FontFamily.Monospace,
                         color = MaterialTheme.colorScheme.primary
