@@ -16,6 +16,8 @@ import com.example.bandmate.viewmodel.SetlistViewModel
 @Composable
 fun SetlistScreen(navController: NavController, viewModel: SetlistViewModel) {
     var newSetlistName by remember { mutableStateOf("") }
+    val setlists by viewModel.setlists.collectAsState()
+
 
     Scaffold(
         topBar = {
@@ -47,7 +49,7 @@ fun SetlistScreen(navController: NavController, viewModel: SetlistViewModel) {
             Spacer(modifier = Modifier.height(16.dp))
 
             LazyColumn {
-                items(viewModel.setlists) { setlist ->
+                items(setlists) { setlist ->
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
