@@ -16,7 +16,7 @@ import com.example.bandmate.viewmodel.SetlistViewModel
 @Composable
 fun SetlistScreen(navController: NavController, viewModel: SetlistViewModel) {
     var newSetlistName by remember { mutableStateOf("") }
-    val setlists by viewModel.setlists.collectAsState()
+    val setlists by viewModel.setlists.collectAsState(initial = emptyList())
 
 
     Scaffold(
